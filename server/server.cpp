@@ -26,17 +26,19 @@ class SinkTask {
             receiver.bind(SINK_TASK_RECEIVER_ADDR);
             response.bind(SINK_TASK_RESPONSE_ADDR);
             int reqNum = 0;
+            char buf[16];
 
             while (1) {
                 message_t message;
                 receiver.recv(&message);
                 ++reqNum;
-                cout << "Received message " <<  reqNum << endl;
-                --clientMap[(char *)message.data()];
-                if (clientMap[(char *)message.data()] == 0) {
-                    message_t reply(1024);
-                    memcpy((char *)reply.data(), (char *)message.data(), 1024);
-                    response.send(message);
+                strncpy(buf, (char *)message.data(), sizeof(buf));
+                --clientMap[buf];
+                //cout << "Received message " <<  message.data() << " " << clientMap[(char *)message.data()] << endl;
+                if (clientMap[buf] == 0) {
+                    message_t reply(16 * 1024);
+                    strncpy((char *)reply.data(), (char *)message.data(), 16);
+                    response.send(reply);
                 }
             }
         }
@@ -64,13 +66,17 @@ class ServerTask {
             
             cout << "server started..." << endl;
             srandom((unsigned) time(NULL));
+            char buf[16];
             while (1) {
                 receiver.recv(&request);
-                clientMap[(char *)request.data()] = 2;
+                strncpy(buf, (char *)request.data(), sizeof(buf));
+                clientMap[buf] = 2;
                 ++reqNum;
-                message.rebuild(1024);
-                memcpy((char *)message.data(), (char *)request.data(), 1024);
+                message.rebuild(16 * 1024);
+                strncpy((char *)message.data(), (char *)request.data(), 16);
                 sender.send(message);
+                message.rebuild(16 * 1024);
+                strncpy((char *)message.data(), (char *)request.data(), 16);
                 sender_1.send(message);
             }
         }

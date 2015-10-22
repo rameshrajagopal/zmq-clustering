@@ -52,8 +52,8 @@ class RequestTask {
             srandom((unsigned) time(NULL));
             sender.connect(SERVER_REQUEST_ADDR);
             for (int num = 0; num < numRequests; ++num) {
-                message_t message(1024);
-                snprintf((char *)message.data(), 1024, "%d:%d", clientNum, num);
+                message_t message(16 * 1024);
+                snprintf((char *)message.data(), 16 * 1024, "%d:%d", clientNum, num);
                 struct timeval curtime;
                 gettimeofday(&curtime, NULL);
                 syslog(LOG_INFO, "request:%s sec:%ld usec: %ld\n", (char *)message.data(), curtime.tv_sec, curtime.tv_usec);
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     vector<std::thread *> threadObjs;
     vector<RequestTask *> reqTasks;
     for (int num = 0; num < numThreads; ++num) {
-        reqTasks.push_back(new RequestTask(num, numRequests));
+        reqTasks.push_back(new RequestTask(numRequests, num));
         threadObjs.push_back(new thread(bind(&RequestTask::run, reqTasks[num])));
         threadObjs[num]->detach();
     }
