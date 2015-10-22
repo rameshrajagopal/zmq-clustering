@@ -30,10 +30,7 @@ class SinkTask {
                 receiver.recv(&message);
                 ++reqNum;
                 cout << "Received message " <<  reqNum << endl;
-
-                message_t resp(1024);
-                memset((void *) resp.data(), 'd', 1024);
-                response.send(resp);
+                response.send(message);
             }
         }
     private:
@@ -58,21 +55,14 @@ class ServerTask {
 
             cout << "server started..." << endl;
             
+            srandom((unsigned) time(NULL));
             while (1) {
                 receiver.recv(&request);
-                srandom((unsigned) time(NULL));
                 ++reqNum;
-                for (int num = 0; num < 3; ++num) {
-                    int workload;
-
-                    workload =  100;
-                    total_msec += workload;
-
-                    message.rebuild(1024);
-                    memset((void *)message.data(), 'b' , 1024);
-                    sender.send(message);
-                    sender_1.send(message);
-                }
+                message.rebuild(1024);
+                memcpy((char *)message.data(), (char *)request.data(), 1024);
+                sender.send(message);
+                sender_1.send(message);
             }
         }
     private:

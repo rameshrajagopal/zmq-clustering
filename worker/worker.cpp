@@ -39,10 +39,7 @@ public:
                 worker_.recv(&msg);
                 ++respNum;
                 /* actual work */
-                std::istringstream iss(static_cast<char *>(msg.data()));
-                iss >> workload;
                 usleep(100 * 1000);
-
                 /* reply */
 #if 0
                 copied_id.copy(&identity);
@@ -50,8 +47,6 @@ public:
                 worker_.send(copied_id, ZMQ_SNDMORE);
                 worker_.send(copied_msg);
 #else
-                msg.rebuild(1024);
-                memset((void *) msg.data(), 'c', 1024);
                 cout << "Reponse Num " << respNum << endl;
                 sender.send(msg);
 #endif

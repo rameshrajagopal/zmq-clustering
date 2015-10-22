@@ -6,6 +6,7 @@
 #include <thread>
 #include <time.h>
 #include <sys/time.h>
+#include <syslog.h>
 
 #define MAX_NUM_THREADS  (100)
 #define MAX_NUM_REQUESTS (100)
@@ -14,6 +15,8 @@
 
 #define SERVER_RESPONSE_ADDR "tcp://192.168.0.241:5559"
 #define SERVER_REQUEST_ADDR  "tcp://192.168.0.241:5556"
+
+#define within(num) (int) ((float) num * random() / (RAND_MAX + 1.0))
 
 using namespace std;
 using namespace zmq;
@@ -26,34 +29,14 @@ class ResponseTask {
             receiver.connect(SERVER_RESPONSE_ADDR);
             message_t request;
             int reqNum = 0;
-            struct timeval tstart;
-            struct timeval tend, tdiff;
+            struct timeval curtime;
 
             while (1) {
                 receiver.recv(&request);
-                if (reqNum == 0) {
-                    gettimeofday(&tstart, NULL);
-                }
+                gettimeofday(&curtime, NULL);
+                syslog(LOG_INFO, "response:%s sec:%ld usec: %ld\n", (char *)request.data(), curtime.tv_sec, curtime.tv_usec);
                 ++reqNum;
-                cout <<".";
-                cout.flush();
-                if (reqNum == MAX_NUM_RESPONSES) {
-                    gettimeofday(&tend, NULL);
-                    int total_msec = 0;
-
-                    if (tend.tv_usec < tstart.tv_usec) {
-                        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec - 1;
-                        tdiff.tv_usec = 1000000 + tend.tv_usec - tstart.tv_usec;
-                    }
-                    else {
-                        tdiff.tv_sec = tend.tv_sec - tstart.tv_sec;
-                        tdiff.tv_usec = tend.tv_usec - tstart.tv_usec;
-                    }
-                    total_msec = tdiff.tv_sec * 1000 + tdiff.tv_usec / 1000;
-                    std::cout << "\nTotal elapsed time: " << total_msec << " msec\n" << std::endl;
-                }
             }
-
         }
     private:
         context_t ctx_;
@@ -62,20 +45,27 @@ class ResponseTask {
 
 class RequestTask {
     public:
-        RequestTask(int req) : ctx_(1), sender(ctx_, ZMQ_PUSH), numRequests(req)
+        RequestTask(int req, int cnum) : ctx_(1), sender(ctx_, ZMQ_PUSH),
+                                              numRequests(req), clientNum(cnum)
     {}
         void run() {
+            srandom((unsigned) time(NULL));
             sender.connect(SERVER_REQUEST_ADDR);
             for (int num = 0; num < numRequests; ++num) {
                 message_t message(1024);
-                memset((void *)message.data(), 'a', 1024);
+                snprintf((char *)message.data(), 1024, "%d:%d", clientNum, num);
+                struct timeval curtime;
+                gettimeofday(&curtime, NULL);
+                syslog(LOG_INFO, "request:%s sec:%ld usec: %ld\n", (char *)message.data(), curtime.tv_sec, curtime.tv_usec);
                 sender.send(message);
+                usleep(within(400 * 1000)); //400 msec
             }
         }
     private:
         context_t ctx_;
         socket_t sender;
         int numRequests;
+        int clientNum;
 };
 
 int main(int argc, char *argv[])
@@ -91,7 +81,8 @@ int main(int argc, char *argv[])
         numRequests = MAX_NUM_REQUESTS;
     }
 
-    cout << "Client: " << numThreads << " threads " << numRequests << " requests" << endl;
+    openlog(NULL, 0, LOG_USER);
+    syslog(LOG_INFO, "client: numThreads: %d numRequests: %d\n", numThreads, numRequests);
     ResponseTask res;
     std::thread t1(bind(&ResponseTask::run, &res));
     t1.detach();
@@ -99,7 +90,7 @@ int main(int argc, char *argv[])
     vector<std::thread *> threadObjs;
     vector<RequestTask *> reqTasks;
     for (int num = 0; num < numThreads; ++num) {
-        reqTasks.push_back(new RequestTask(numRequests));
+        reqTasks.push_back(new RequestTask(num, numRequests));
         threadObjs.push_back(new thread(bind(&RequestTask::run, reqTasks[num])));
         threadObjs[num]->detach();
     }
@@ -108,6 +99,7 @@ int main(int argc, char *argv[])
         delete reqTasks[num];
         delete threadObjs[num];
     }
+    closelog();
 
     return 0;
 }
