@@ -48,7 +48,9 @@ public:
                 worker_.send(copied_msg);
 #else
                 cout << "Reponse Num " << respNum << endl;
-                sender.send(msg);
+                message_t reply(1024);
+                memcpy((char *)reply.data(), (char *)msg.data(), 1024);
+                sender.send(reply);
 #endif
             }
         }

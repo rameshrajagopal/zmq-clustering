@@ -5,6 +5,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <thread>
+#include <map>
 
 using namespace std;
 using namespace zmq;
@@ -18,7 +19,8 @@ using namespace zmq;
 
 class SinkTask {
     public:
-        SinkTask() : ctx_(1), receiver(ctx_, ZMQ_PULL), response(ctx_, ZMQ_PUSH)
+        SinkTask(std::map<string, int> & cmap) : 
+            ctx_(1), receiver(ctx_, ZMQ_PULL), response(ctx_, ZMQ_PUSH), clientMap(cmap)
     {}
         void run() {
             receiver.bind(SINK_TASK_RECEIVER_ADDR);
@@ -30,19 +32,26 @@ class SinkTask {
                 receiver.recv(&message);
                 ++reqNum;
                 cout << "Received message " <<  reqNum << endl;
-                response.send(message);
+                --clientMap[(char *)message.data()];
+                if (clientMap[(char *)message.data()] == 0) {
+                    message_t reply(1024);
+                    memcpy((char *)reply.data(), (char *)message.data(), 1024);
+                    response.send(message);
+                }
             }
         }
     private:
         context_t ctx_;
         socket_t receiver;
         socket_t response;
+        std::map<string, int> & clientMap;
 };
 
 class ServerTask {
     public:
-        ServerTask() : ctx_(1), receiver(ctx_, ZMQ_PULL), sender(ctx_, ZMQ_DEALER), 
-                       sender_1(ctx_, ZMQ_DEALER)
+        ServerTask(std::map<string, int> & cmap) : 
+            ctx_(1), receiver(ctx_, ZMQ_PULL), sender(ctx_, ZMQ_DEALER), 
+            sender_1(ctx_, ZMQ_DEALER), clientMap(cmap)
     {}
         void run() {
             char identity[16] = "server";
@@ -52,12 +61,12 @@ class ServerTask {
             receiver.bind(CLIENT_REQUEST_RECV_ADDR);
             message_t request, message;
             int total_msec = 0, reqNum = 0;
-
-            cout << "server started..." << endl;
             
+            cout << "server started..." << endl;
             srandom((unsigned) time(NULL));
             while (1) {
                 receiver.recv(&request);
+                clientMap[(char *)request.data()] = 2;
                 ++reqNum;
                 message.rebuild(1024);
                 memcpy((char *)message.data(), (char *)request.data(), 1024);
@@ -70,13 +79,14 @@ class ServerTask {
         socket_t receiver;
         socket_t sender;
         socket_t sender_1;
+        std::map<string, int> & clientMap;
 };
 
 int main(int argc, char *argv[])
 {
-    ServerTask serverTaskObj;
-    SinkTask st;
-
+    std::map <string, int> clientMap;
+    ServerTask serverTaskObj(clientMap);
+    SinkTask st(clientMap);
     std::thread serverThread(bind(&ServerTask::run, &serverTaskObj));
     serverThread.detach();
 
