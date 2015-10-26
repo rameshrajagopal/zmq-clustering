@@ -11,6 +11,13 @@
 #define MAX_NUM_THREADS  (100)
 #define MAX_NUM_REQUESTS (100)
 
+#define ENABLE_SYSLOG
+#ifdef ENABLE_SYSLOG
+#define SYSLOG(fmt...) syslog(fmt)
+#else
+#define SYSLOG(fmt...) 
+#endif
+
 #define MAX_NUM_RESPONSES (MAX_NUM_REQUESTS * MAX_NUM_THREADS * 6)
 
 #define SERVER_RESPONSE_ADDR "tcp://192.168.0.241:5559"
@@ -34,7 +41,7 @@ class ResponseTask {
             while (1) {
                 receiver.recv(&request);
                 gettimeofday(&curtime, NULL);
-                syslog(LOG_INFO, "response:%s sec:%ld usec: %ld\n", (char *)request.data(), curtime.tv_sec, curtime.tv_usec);
+                SYSLOG(LOG_INFO, "response %s sec:%ld usec:%ld\n", (char *)request.data(), curtime.tv_sec, curtime.tv_usec);
                 ++reqNum;
             }
         }
@@ -56,7 +63,7 @@ class RequestTask {
                 snprintf((char *)message.data(), 16 * 1024, "%d:%d", clientNum, num);
                 struct timeval curtime;
                 gettimeofday(&curtime, NULL);
-                syslog(LOG_INFO, "request:%s sec:%ld usec: %ld\n", (char *)message.data(), curtime.tv_sec, curtime.tv_usec);
+                SYSLOG(LOG_INFO, "request %s sec:%ld usec:%ld\n", (char *)message.data(), curtime.tv_sec, curtime.tv_usec);
                 sender.send(message);
                 usleep(within(400 * 1000)); //400 msec
             }
@@ -82,8 +89,8 @@ int main(int argc, char *argv[])
     }
 
     openlog(NULL, 0, LOG_USER);
-    syslog(LOG_INFO, "client: numThreads: %d numRequests: %d\n", numThreads, numRequests);
-    ResponseTask res;
+    SYSLOG(LOG_INFO, "client: numThreads: %d numRequests: %d\n", numThreads, numRequests);
+    ResponseTask res(reqMaps);
     std::thread t1(bind(&ResponseTask::run, &res));
     t1.detach();
 
