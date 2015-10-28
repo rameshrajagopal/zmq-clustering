@@ -23,8 +23,8 @@
 
 #define MAX_NUM_RESPONSES (MAX_NUM_REQUESTS * MAX_NUM_THREADS * 6)
 
-#define SERVER_RESPONSE_ADDR "tcp://192.168.0.241:5559"
-#define SERVER_REQUEST_ADDR  "tcp://192.168.0.241:5556"
+#define SERVER_RESPONSE_ADDR "tcp://192.168.0.12:5559"
+#define SERVER_REQUEST_ADDR  "tcp://192.168.0.12:5556"
 
 #define within(num) (int) ((float) num * random() / (RAND_MAX + 1.0))
 
@@ -65,6 +65,7 @@ class ResponseTask {
                 reqMap.put(buf, getDiffTime(reqMap.get(buf), curtime));
                 SYSLOG(LOG_INFO, "response %s sec:%ld usec:%ld\n", (char *)request.data(), curtime.tv_sec, curtime.tv_usec);
                 ++reqNum;
+                cout << (char *)request.data() << endl;
             }
         }
     private:
