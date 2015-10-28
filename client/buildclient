@@ -1,1 +1,1 @@
-g++ -g -std=c++11 -o client -I/home/indix/explore/zeromq-4.1.3/include -I/home/indix/explore/zmq/cppzmq -I/home/indix/explore/zmq/zguide/examples/C++ -L /home/indix/explore/zeromq-4.1.3/.libs/ client.cpp -lzmq
+g++ -g -std=c++11 -o client -I../common/ -I/home/indix/explore/zeromq-4.1.3/include -I/home/indix/explore/zmq/cppzmq -I/home/indix/explore/zmq/zguide/examples/C++ -L /home/indix/explore/zeromq-4.1.3/.libs/ client.cpp -lzmq

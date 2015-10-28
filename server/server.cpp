@@ -59,7 +59,7 @@ class ServerTask {
             char identity[16] = "server";
             sender.setsockopt(ZMQ_IDENTITY, identity, strlen(identity));
             sender.connect(WORKER_1_ADDR);
-            sender_1.connect(WORKER_2_ADDR);
+//            sender_1.connect(WORKER_2_ADDR);
             receiver.bind(CLIENT_REQUEST_RECV_ADDR);
             message_t request, message;
             int total_msec = 0, reqNum = 0;
@@ -70,14 +70,16 @@ class ServerTask {
             while (1) {
                 receiver.recv(&request);
                 strncpy(buf, (char *)request.data(), sizeof(buf));
-                clientMap[buf] = 2;
+                clientMap[buf] = 1;
                 ++reqNum;
                 message.rebuild(16 * 1024);
                 strncpy((char *)message.data(), (char *)request.data(), 16);
                 sender.send(message);
+#if 0
                 message.rebuild(16 * 1024);
                 strncpy((char *)message.data(), (char *)request.data(), 16);
                 sender_1.send(message);
+#endif
             }
         }
     private:
