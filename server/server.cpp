@@ -14,7 +14,7 @@ using namespace zmq;
 #define  SINK_TASK_RECEIVER_ADDR "tcp://*:5558"
 #define  SINK_TASK_RESPONSE_ADDR "tcp://*:5559"
 #define  WORKER_1_ADDR "tcp://localhost:5557"
-#define  WORKER_2_ADDR "tcp://192.168.0.203:5557"
+#define  WORKER_2_ADDR "tcp://192.168.0.241:5557"
 #define  CLIENT_REQUEST_RECV_ADDR "tcp://*:5556"
 
 class SinkTask {
@@ -36,7 +36,8 @@ class SinkTask {
                 --clientMap[buf];
                 //cout << "Received message " <<  message.data() << " " << clientMap[(char *)message.data()] << endl;
                 if (clientMap[buf] == 0) {
-                    message_t reply(16 * 1024);
+                    int data_size = within(16 * 1024);
+                    message_t reply(data_size > 16 ? data_size : 16);
                     strncpy((char *)reply.data(), (char *)message.data(), 16);
                     response.send(reply);
                 }
@@ -59,7 +60,7 @@ class ServerTask {
             char identity[16] = "server";
             sender.setsockopt(ZMQ_IDENTITY, identity, strlen(identity));
             sender.connect(WORKER_1_ADDR);
-//            sender_1.connect(WORKER_2_ADDR);
+            sender_1.connect(WORKER_2_ADDR);
             receiver.bind(CLIENT_REQUEST_RECV_ADDR);
             message_t request, message;
             int total_msec = 0, reqNum = 0;
@@ -75,11 +76,9 @@ class ServerTask {
                 message.rebuild(16 * 1024);
                 strncpy((char *)message.data(), (char *)request.data(), 16);
                 sender.send(message);
-#if 0
                 message.rebuild(16 * 1024);
                 strncpy((char *)message.data(), (char *)request.data(), 16);
                 sender_1.send(message);
-#endif
             }
         }
     private:

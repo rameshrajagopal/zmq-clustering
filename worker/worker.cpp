@@ -39,7 +39,7 @@ public:
                 worker_.recv(&msg);
                 ++respNum;
                 /* actual work */
-                usleep(100 * 1000);
+                usleep(within(200 * 1000));
                 /* reply */
 #if 0
                 copied_id.copy(&identity);
@@ -48,7 +48,8 @@ public:
                 worker_.send(copied_msg);
 #else
                 cout << "Reponse Num " << respNum << endl;
-                message_t reply(16 * 1024);
+                int data_size = within(16 * 1024);
+                message_t reply((data_size > 16 ? data_size : 16));
                 strncpy((char *)reply.data(), (char *)msg.data(), 16);
                 sender.send(reply);
 #endif

@@ -1,0 +1,23 @@
+Run1: 
+
+Setup: 
+
+Client = 100 X 100 
+Master = 2 threads
+Slave  = 100 threads (actual work 100 msec sleep) 
+
+Logs: 
+
+min req: 0:0 value 103 msec
+max req: 13:99 value 78843 msec
+total time: 401881777 total requests: 10000
+avg time: 40188
+
+min req: 0:0 value 103 msec
+max req: 74:94 value 78811 msec
+total time: 402795541 total requests: 10000
+avg time: 40279
+
+
+
+
