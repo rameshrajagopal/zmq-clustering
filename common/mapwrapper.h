@@ -30,11 +30,12 @@ class Map
     }
     void printAll() 
     {
-        int min_value = INT_MAX, max_value = 0;
+        int min_value = INT_MAX, max_value = INT_MIN;
         string min_req, max_req;
-        int avg = 0, total = 0, num_requests = 0;
+        int avg = 0, num_requests = 0;
         int total_msec = 0;
         int nerrors = 0;
+        uint64_t total = 0;
 
         auto it = rmap.begin();
         for (; it != rmap.end(); ++it) {
