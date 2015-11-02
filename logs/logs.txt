@@ -5,6 +5,7 @@ Setup:
 Client = 100 X 100 
 Master = 2 threads
 Slave  = 100 threads (actual work 100 msec sleep) 
+BYtes  = 16kbytes
 
 Logs: 
 
@@ -18,6 +19,23 @@ max req: 74:94 value 78811 msec
 total time: 402795541 total requests: 10000
 avg time: 40279
 
+Run2:
+
+Setup: 
+
+Client = 100 X 100 
+Master = 2 threads
+Slave  = 100 threads (random sleep of 200 msec)
+Slave  = 100 threads (random sleep of 200 msec)
+Bytes  = random of 16kbytes
+
+Logs: 
+
+min req: 53:0 value -1287894129 msec
+max req: 55:98 value 178565 msec
+total time: 452681968 total requests: 10000
+errors: 0
+avg time: 45268
 
 
 

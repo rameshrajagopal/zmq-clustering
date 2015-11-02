@@ -14,7 +14,8 @@ using namespace zmq;
 #define  SINK_TASK_RECEIVER_ADDR "tcp://*:5558"
 #define  SINK_TASK_RESPONSE_ADDR "tcp://*:5559"
 #define  WORKER_1_ADDR "tcp://localhost:5557"
-#define  WORKER_2_ADDR "tcp://192.168.0.241:5557"
+#define  WORKER_2_ADDR "tcp://192.168.0.241:7000"
+#define  WORKER_3_ADDR "tcp://192.168.0.203:5557"
 #define  CLIENT_REQUEST_RECV_ADDR "tcp://*:5556"
 
 class SinkTask {
@@ -54,13 +55,15 @@ class ServerTask {
     public:
         ServerTask(std::map<string, int> & cmap) : 
             ctx_(1), receiver(ctx_, ZMQ_PULL), sender(ctx_, ZMQ_DEALER), 
-            sender_1(ctx_, ZMQ_DEALER), clientMap(cmap)
+            sender_1(ctx_, ZMQ_DEALER), clientMap(cmap), 
+            sender_2(ctx_, ZMQ_DEALER)
     {}
         void run() {
             char identity[16] = "server";
             sender.setsockopt(ZMQ_IDENTITY, identity, strlen(identity));
             sender.connect(WORKER_1_ADDR);
             sender_1.connect(WORKER_2_ADDR);
+            sender_2.connect(WORKER_3_ADDR);
             receiver.bind(CLIENT_REQUEST_RECV_ADDR);
             message_t request, message;
             int total_msec = 0, reqNum = 0;
@@ -79,6 +82,9 @@ class ServerTask {
                 message.rebuild(16 * 1024);
                 strncpy((char *)message.data(), (char *)request.data(), 16);
                 sender_1.send(message);
+                message.rebuild(16 * 1024);
+                strncpy((char *)message.data(), (char *)request.data(), 16);
+                sender_2.send(mressage);
             }
         }
     private:
