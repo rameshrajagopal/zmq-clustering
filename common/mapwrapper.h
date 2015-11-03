@@ -35,7 +35,7 @@ class Map
         int avg = 0, num_requests = 0;
         int total_msec = 0;
         int nerrors = 0;
-        uint64_t total = 0;
+        int64_t total = 0;
 
         auto it = rmap.begin();
         for (; it != rmap.end(); ++it) {

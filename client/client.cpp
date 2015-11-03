@@ -85,8 +85,8 @@ class RequestTask {
             srandom((unsigned) time(NULL));
             sender.connect(SERVER_REQUEST_ADDR);
             for (int num = 0; num < numRequests; ++num) {
-                message_t message(16 * 1024);
-                snprintf((char *)message.data(), 16 * 1024, "%d:%d", clientNum, num);
+                message_t message(1 * 1024);
+                snprintf((char *)message.data(), 1 * 1024, "%d:%d", clientNum, num);
                 snprintf(buf, 16, "%s", (char *)message.data());
                 cout << "req : " << clientNum << " " << num << endl;
                 struct timeval curtime;
@@ -94,7 +94,7 @@ class RequestTask {
                 reqMap.put(buf, curtime);
                 SYSLOG(LOG_INFO, "request %s sec:%ld usec:%ld\n", (char *)message.data(), curtime.tv_sec, curtime.tv_usec);
                 sender.send(message);
-                usleep(within(400 * 1000)); //400 msec
+        //        usleep(within(400 * 1000)); //400 msec
             }
         }
     private:
